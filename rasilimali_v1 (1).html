@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Rasilimali — Kenya Public Asset Register</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════
+   TOKENS — ledger + audit
+═══════════════════════════ */
+:root {
+  --ink:    #0A1628;
+  --ink2:   #0F1F3C;
+  --ink3:   #162548;
+  --ink4:   #1E3060;
+  --gold:   #F5C518;
+  --gold-l: rgba(245,197,24,0.12);
+  --gold-g: rgba(245,197,24,0.3);
+  --slate:  #8892A4;
+  --slate2: #B4BCC8;
+  --red:    #DC2626;
+  --red-l:  rgba(220,38,38,0.1);
+  --green:  #16A34A;
+  --green-l:rgba(22,163,74,0.1);
+  --white:  #FFFFFF;
+  --w90:    rgba(255,255,255,0.9);
+  --w70:    rgba(255,255,255,0.7);
+  --w50:    rgba(255,255,255,0.5);
+  --w30:    rgba(255,255,255,0.3);
+  --w10:    rgba(255,255,255,0.1);
+  --w05:    rgba(255,255,255,0.05);
+  --bd:     rgba(255,255,255,0.1);
+  --bd2:    rgba(255,255,255,0.06);
+  --font-serif: 'IBM Plex Serif', Georgia, serif;
+  --font-mono:  'IBM Plex Mono', 'Courier New', monospace;
+  --font-sans:  'Inter', system-ui, sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--ink);color:var(--white);font-family:var(--font-sans);overflow-x:hidden}
+#app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--ink);position:relative}
+.screen{display:none;flex-direction:column;min-height:100vh}
+.screen.active{display:flex}
+
+/* TOPBAR */
+.topbar{padding:14px 20px 12px;background:var(--ink);border-bottom:1px solid var(--bd2);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.brand{font-family:var(--font-serif);font-weight:700;font-size:18px;letter-spacing:-0.3px;color:var(--white)}
+.brand-r{color:var(--gold)}
+.topbar-back{background:none;border:none;color:var(--slate);font-size:13px;cursor:pointer;font-family:var(--font-sans);display:flex;align-items:center;gap:5px}
+.topbar-back:hover{color:var(--white)}
+.topbar-pill{background:var(--gold-l);border:1px solid var(--gold-g);color:var(--gold);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px}
+
+/* SCROLL BODY */
+.scroll{flex:1;padding:20px 20px 88px;overflow-y:auto}
+
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--ink2);border-top:1px solid var(--bd2);display:flex;z-index:50}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 14px;cursor:pointer;border:none;background:none;color:var(--slate);font-size:10px;font-family:var(--font-sans);font-weight:500;text-transform:uppercase;letter-spacing:.4px;transition:color .15s}
+.bnav-btn .bi{font-size:18px;line-height:1}
+.bnav-btn.on{color:var(--gold)}
+
+/* ═══════════════════════════
+   HERO — ledger intro
+═══════════════════════════ */
+.hero-section{padding:26px 20px 0}
+.hero-eyebrow{font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--gold);margin-bottom:12px;font-family:var(--font-sans)}
+.hero-headline{font-family:var(--font-serif);font-size:26px;font-weight:700;line-height:1.2;letter-spacing:-.3px;margin-bottom:12px}
+.hero-headline em{font-style:italic;color:var(--gold)}
+.hero-body{font-size:13px;color:var(--slate2);line-height:1.7;margin-bottom:22px}
+
+/* LIVE LEDGER — SIGNATURE ELEMENT */
+.ledger-wrap{background:var(--ink2);border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.ledger-header{display:grid;grid-template-columns:1fr 80px 80px;gap:0;background:var(--ink3);border-bottom:1px solid var(--bd)}
+.ledger-th{padding:8px 10px;font-size:10px;font-weight:600;color:var(--slate);letter-spacing:.5px;text-transform:uppercase;font-family:var(--font-sans)}
+.ledger-row{display:grid;grid-template-columns:1fr 80px 80px;gap:0;border-bottom:1px solid var(--bd2);animation:slideIn .4s ease both}
+.ledger-row:last-child{border-bottom:none}
+.ledger-cell{padding:9px 10px;font-size:12px;font-family:var(--font-mono)}
+.ledger-cell.name{color:var(--w90);font-size:11px;line-height:1.35}
+.ledger-cell.value{color:var(--gold);font-weight:600;text-align:right}
+.ledger-cell.status{text-align:right}
+.status-tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px}
+.s-ok{background:var(--green-l);color:#4ADE80}
+.s-flag{background:var(--red-l);color:#F87171}
+.s-miss{background:rgba(245,197,24,.1);color:var(--gold)}
+.ledger-cursor{display:inline-block;width:6px;height:12px;background:var(--gold);margin-left:3px;animation:blink 1s step-end infinite;vertical-align:middle}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+
+/* STAT STRIP */
+.stat-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+.stat-tile{background:var(--ink2);border:1px solid var(--bd2);border-radius:8px;padding:12px 10px;text-align:center}
+.stat-val{font-family:var(--font-serif);font-size:20px;font-weight:700;color:var(--gold);margin-bottom:3px;letter-spacing:-.5px}
+.stat-lbl{font-size:10px;color:var(--slate);line-height:1.4;font-family:var(--font-sans)}
+
+/* CTA GRID */
+.cta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.cta-p{background:var(--gold);color:var(--ink);border:none;border-radius:8px;padding:14px 12px;font-family:var(--font-sans);font-weight:700;font-size:13px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:3px;transition:background .15s}
+.cta-p:hover{background:#e4b610}
+.cta-p .ci{font-size:20px}
+.cta-p .cs{font-size:11px;font-weight:500;opacity:.8}
+.cta-s{background:var(--ink2);color:var(--white);border:1px solid var(--bd);border-radius:8px;padding:14px 12px;font-family:var(--font-sans);font-weight:700;font-size:13px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:3px;transition:border-color .15s}
+.cta-s:hover{border-color:var(--gold-g)}
+.cta-s .ci{font-size:20px}
+.cta-s .cs{font-size:11px;font-weight:500;color:var(--slate)}
+
+/* ═══════════════════════════
+   ASSET CARDS
+═══════════════════════════ */
+.asset-card{background:var(--ink2);border:1px solid var(--bd2);border-radius:10px;padding:14px 16px;margin-bottom:10px;transition:border-color .15s;cursor:pointer}
+.asset-card:hover{border-color:var(--gold-g)}
+.asset-card.flagged{border-left:3px solid var(--red);border-radius:0 10px 10px 0}
+.asset-card.missing{border-left:3px solid var(--gold);border-radius:0 10px 10px 0}
+.ac-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.ac-name{font-family:var(--font-serif);font-size:14px;font-weight:600;color:var(--white);line-height:1.35}
+.ac-id{font-family:var(--font-mono);font-size:10px;color:var(--gold);margin-top:3px}
+.ac-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;flex-shrink:0}
+.ac-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ac-field{background:var(--ink3);border-radius:5px;padding:7px 9px}
+.ac-key{font-size:10px;color:var(--slate);margin-bottom:2px;text-transform:uppercase;letter-spacing:.3px}
+.ac-val{font-size:12px;color:var(--w90);font-family:var(--font-mono)}
+.ac-flag{background:var(--red-l);border:1px solid rgba(220,38,38,.2);border-radius:6px;padding:8px 10px;margin-top:10px;font-size:11px;color:#F87171;line-height:1.55;display:flex;gap:7px}
+.ac-miss{background:var(--gold-l);border:1px solid var(--gold-g);border-radius:6px;padding:8px 10px;margin-top:10px;font-size:11px;color:var(--gold);line-height:1.55;display:flex;gap:7px}
+.ac-ok{background:var(--green-l);border:1px solid rgba(22,163,74,.2);border-radius:6px;padding:8px 10px;margin-top:10px;font-size:11px;color:#4ADE80;line-height:1.55;display:flex;gap:7px}
+
+/* FILTERS / SEARCH */
+.search-bar{display:flex;gap:8px;margin-bottom:12px}
+.search-input{flex:1;background:var(--ink2);border:1px solid var(--bd);border-radius:8px;padding:11px 14px;color:var(--white);font-family:var(--font-sans);font-size:13px;outline:none;transition:border-color .15s}
+.search-input:focus{border-color:var(--gold-g)}
+.search-input::placeholder{color:var(--slate)}
+.search-btn{background:var(--gold);border:none;border-radius:8px;padding:11px 16px;cursor:pointer;font-family:var(--font-sans);font-weight:700;font-size:13px;color:var(--ink)}
+.filter-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none;margin-bottom:14px}
+.filter-row::-webkit-scrollbar{display:none}
+.filter-pill{background:var(--ink2);border:1px solid var(--bd);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:600;color:var(--slate);cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:var(--font-sans)}
+.filter-pill.on{background:var(--gold-l);border-color:var(--gold-g);color:var(--gold)}
+.filter-pill:hover{border-color:var(--gold-g)}
+
+/* SECTION LABELS */
+.sec-label{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--slate);margin:18px 0 10px;display:flex;align-items:center;gap:8px;font-family:var(--font-sans)}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--bd2)}
+
+/* ENTITY PROFILE */
+.entity-header{background:var(--ink2);border:1px solid var(--bd2);border-radius:10px;padding:18px;margin-bottom:14px}
+.ent-name{font-family:var(--font-serif);font-size:18px;font-weight:700;margin-bottom:4px}
+.ent-type{font-size:12px;color:var(--slate);margin-bottom:14px}
+.ent-stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ent-stat{background:var(--ink3);border-radius:6px;padding:10px;text-align:center}
+.ent-stat-val{font-family:var(--font-serif);font-size:18px;font-weight:700;color:var(--gold)}
+.ent-stat-lbl{font-size:10px;color:var(--slate);margin-top:2px}
+
+/* PROCUREMENT CROSS-REF */
+.ppra-link{background:var(--ink3);border:1px solid var(--bd);border-radius:8px;padding:12px 14px;margin-bottom:8px}
+.ppra-ref{font-family:var(--font-mono);font-size:11px;color:var(--gold);margin-bottom:4px}
+.ppra-desc{font-size:12px;color:var(--w70);line-height:1.5}
+.ppra-value{font-size:12px;color:var(--white);font-weight:600;margin-top:4px}
+
+/* CONTEXT PANEL */
+.context-box{background:var(--gold-l);border:1px solid var(--gold-g);border-radius:8px;padding:13px 14px;margin-bottom:14px}
+.context-title{font-size:12px;font-weight:700;color:var(--gold);margin-bottom:5px;font-family:var(--font-sans)}
+.context-body{font-size:12px;color:var(--w70);line-height:1.6}
+
+/* REVENUE MODEL */
+.revenue-section{margin-bottom:20px}
+.rev-card{background:var(--ink2);border:1px solid var(--bd2);border-radius:10px;padding:14px 16px;margin-bottom:8px}
+.rev-title{font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
+.rev-body{font-size:12px;color:var(--slate2);line-height:1.65}
+.rev-tag{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;flex-shrink:0}
+.rt-yr1{background:var(--green-l);color:#4ADE80}
+.rt-yr2{background:var(--gold-l);color:var(--gold)}
+.rt-yr3{background:rgba(99,102,241,.15);color:#A5B4FC}
+
+/* INFO BOX */
+.info-box{background:var(--w05);border:1px solid var(--bd2);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--slate2);line-height:1.65;margin:12px 0}
+
+/* BTN */
+.btn-p{width:100%;background:var(--gold);color:var(--ink);border:none;border-radius:8px;padding:14px;font-family:var(--font-sans);font-weight:700;font-size:15px;cursor:pointer;transition:background .15s;margin-bottom:10px}
+.btn-p:hover{background:#e4b610}
+.btn-o{width:100%;background:none;border:1px solid var(--bd);color:var(--slate2);border-radius:8px;padding:13px;font-family:var(--font-sans);font-weight:600;font-size:14px;cursor:pointer;margin-bottom:10px}
+.btn-o:hover{border-color:var(--gold-g);color:var(--gold)}
+.btn-g{width:100%;background:none;border:none;color:var(--slate);font-size:13px;padding:10px;cursor:pointer;font-family:var(--font-sans)}
+
+/* REPORT FORM */
+.f-label{display:block;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--slate);margin:14px 0 6px;font-family:var(--font-sans)}
+.f-input{width:100%;background:var(--ink2);border:1px solid var(--bd);border-radius:8px;padding:11px 13px;color:var(--white);font-family:var(--font-sans);font-size:13px;outline:none;transition:border-color .15s}
+.f-input:focus{border-color:var(--gold-g)}
+.f-input::placeholder{color:var(--slate)}
+select.f-input option{background:var(--ink3);color:var(--white)}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.anim{animation:fadeIn .2s ease}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ════════════ LANDING ════════════ -->
+<div id="scr-home" class="screen active">
+  <div class="topbar">
+    <div class="brand"><span class="brand-r">Rasilimali</span></div>
+    <span class="topbar-pill">BETA</span>
+  </div>
+  <div class="scroll">
+    <div class="hero-section">
+      <div class="hero-eyebrow">Kenya public asset register</div>
+      <div class="hero-headline">KSh 4.9 trillion.<br>How much can you <em>actually find?</em></div>
+      <div class="hero-body">The government has valued its assets at KSh 4.9 trillion. Rasilimali maps what's publicly verifiable — buildings, land, vehicles, and equipment — cross-referenced against procurement records and audit findings. Every missing record is a question that deserves an answer.</div>
+    </div>
+
+    <!-- LIVE LEDGER ANIMATION -->
+    <div style="padding:0 20px 20px">
+      <div class="sec-label">Live asset ledger<div class="ledger-cursor"></div></div>
+      <div class="ledger-wrap">
+        <div class="ledger-header">
+          <div class="ledger-th">Asset</div>
+          <div class="ledger-th" style="text-align:right">Value</div>
+          <div class="ledger-th" style="text-align:right">Status</div>
+        </div>
+        <div id="ledger-body"></div>
+      </div>
+    </div>
+
+    <div class="stat-strip" style="padding:0 20px;margin-bottom:20px">
+      <div class="stat-tile"><div class="stat-val">4.9T</div><div class="stat-lbl">KSh govt asset portfolio</div></div>
+      <div class="stat-tile"><div class="stat-val" id="stat-assets">147</div><div class="stat-lbl">Assets indexed</div></div>
+      <div class="stat-tile"><div class="stat-val" id="stat-flags">38</div><div class="stat-lbl">Audit flags raised</div></div>
+    </div>
+
+    <div class="cta-grid" style="padding:0 20px">
+      <button class="cta-p" onclick="goSearch()">
+        <span class="ci">🔍</span>
+        Search assets
+        <span class="cs">Find by entity or location</span>
+      </button>
+      <button class="cta-s" onclick="goEntities()">
+        <span class="ci">🏛️</span>
+        By entity
+        <span class="cs">Ministries & parastatals</span>
+      </button>
+      <button class="cta-s" onclick="goFlags()">
+        <span class="ci">⚑</span>
+        Flagged assets
+        <span class="cs">Audit inconsistencies</span>
+      </button>
+      <button class="cta-s" onclick="goRevenue()">
+        <span class="ci">💡</span>
+        Revenue model
+        <span class="cs">How this makes money</span>
+      </button>
+    </div>
+
+    <div style="padding:0 20px;margin-top:16px">
+      <div class="context-box">
+        <div class="context-title">Why Rasilimali exists</div>
+        <div class="context-body">The National Treasury is building an internal asset balance sheet (accrual accounting transition, 2024–2027, KSh 3.1B World Bank/IMF project). That work is internal. Rasilimali is the citizen layer above it — making the same data searchable, cross-referenced, and publicly accountable. The government is building the ledger. We are making the ledger visible.</div>
+      </div>
+      <div class="sec-label">Recent citizen asset reports</div>
+      <div id="home-reports"></div>
+    </div>
+    <div style="height:20px"></div>
+  </div>
+</div>
+
+<!-- ════════════ SEARCH ════════════ -->
+<div id="scr-search" class="screen">
+  <div class="topbar">
+    <button class="topbar-back" onclick="goHome()">← Back</button>
+    <div class="brand"><span class="brand-r">Rasilimali</span></div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="scroll" style="padding-top:16px">
+    <div class="hero-eyebrow" style="margin-bottom:10px">Asset search</div>
+    <div class="search-bar">
+      <input class="search-input" id="asset-search" type="text" placeholder="Ministry, building, land parcel, vehicle…" oninput="filterAssets()">
+    </div>
+    <div class="filter-row" id="cat-filters"></div>
+    <div style="font-size:12px;color:var(--slate);margin-bottom:12px" id="result-count"></div>
+    <div id="asset-list"></div>
+  </div>
+</div>
+
+<!-- ════════════ BY ENTITY ════════════ -->
+<div id="scr-entities" class="screen">
+  <div class="topbar">
+    <button class="topbar-back" onclick="goHome()">← Back</button>
+    <div class="brand"><span class="brand-r">Rasilimali</span></div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="scroll" style="padding-top:16px">
+    <div class="hero-eyebrow" style="margin-bottom:4px">Public entities</div>
+    <div style="font-size:13px;color:var(--slate2);margin-bottom:16px;line-height:1.6">Ministries, state departments, and parastatals — ranked by total indexed asset value. Tap to see asset details and procurement cross-references.</div>
+    <div id="entity-list"></div>
+  </div>
+</div>
+
+<!-- ════════════ FLAGGED ASSETS ════════════ -->
+<div id="scr-flags" class="screen">
+  <div class="topbar">
+    <button class="topbar-back" onclick="goHome()">← Back</button>
+    <div class="brand"><span class="brand-r">Rasilimali</span></div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="scroll" style="padding-top:16px">
+    <div class="hero-eyebrow" style="margin-bottom:4px">⚑ Flagged assets</div>
+    <div style="font-size:13px;color:var(--slate2);margin-bottom:16px;line-height:1.6">Assets where Rasilimali's cross-reference against AG audit findings, PPRA procurement records, or citizen reports reveals an inconsistency.</div>
+    <div class="filter-row" id="flag-filters"></div>
+    <div id="flag-list"></div>
+  </div>
+</div>
+
+<!-- ════════════ CITIZEN REPORT ════════════ -->
+<div id="scr-report" class="screen">
+  <div class="topbar">
+    <button class="topbar-back" onclick="goHome()">← Back</button>
+    <div class="brand"><span class="brand-r">Rasilimali</span></div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="scroll" style="padding-top:16px">
+    <div class="hero-eyebrow" style="margin-bottom:4px">Report a missing or misused asset</div>
+    <div style="font-size:13px;color:var(--slate2);margin-bottom:20px;line-height:1.6">If you know of a government asset that should be on the register but isn't — or an asset being misused — report it here. Reports are reviewed by the Rasilimali team and, where patterns emerge, referred to the AG's VfM audit queue.</div>
+    <label class="f-label">Asset type</label>
+    <select class="f-input" id="rep-type">
+      <option value="">Select type…</option>
+      <option>Government building / office</option>
+      <option>Government vehicle</option>
+      <option>Land / plot</option>
+      <option>Equipment / machinery</option>
+      <option>Infrastructure (road, water, power)</option>
+      <option>Other</option>
+    </select>
+    <label class="f-label">Ministry or county responsible</label>
+    <input class="f-input" id="rep-entity" type="text" placeholder="e.g. Ministry of Health, Nairobi County">
+    <label class="f-label">Location / description</label>
+    <input class="f-input" id="rep-location" type="text" placeholder="e.g. Westlands, Nairobi — brown building on Waiyaki Way">
+    <label class="f-label">What is the issue?</label>
+    <textarea class="f-input" id="rep-issue" rows="4" placeholder="Describe what you've observed — missing from register, being used privately, in disrepair despite procurement records showing maintenance…" style="min-height:90px;resize:vertical"></textarea>
+    <label class="f-label">Procurement reference (if known)</label>
+    <input class="f-input" id="rep-ppra" type="text" placeholder="PPRA/YYYY/XX/XXXXX or tender number">
+    <label class="f-label">Estimated value (KSh, if known)</label>
+    <input class="f-input" id="rep-value" type="text" placeholder="e.g. 45M">
+    <div class="info-box">Your report is anonymous. It enters the Rasilimali citizen-input queue and is reviewed against AG audit records and PPRA data. Verified reports are added to the public register with an audit flag.</div>
+    <button class="btn-p" style="margin-top:16px" onclick="submitReport()">Submit report</button>
+    <div id="rep-confirm" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ════════════ REVENUE MODEL ════════════ -->
+<div id="scr-revenue" class="screen">
+  <div class="topbar">
+    <button class="topbar-back" onclick="goHome()">← Back</button>
+    <div class="brand"><span class="brand-r">Rasilimali</span></div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="scroll" style="padding-top:16px">
+    <div class="hero-eyebrow" style="margin-bottom:4px">Revenue model — all six products</div>
+    <div style="font-size:13px;color:var(--slate2);margin-bottom:20px;line-height:1.6">How each product in the portfolio generates sustainable income. Honest timelines — not projections dressed as certainties.</div>
+    <div id="revenue-content"></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bnav" id="bnav">
+  <button class="bnav-btn on" id="bn-home" onclick="goHome()"><span class="bi">🏛️</span>Register</button>
+  <button class="bnav-btn" id="bn-search" onclick="goSearch()"><span class="bi">🔍</span>Search</button>
+  <button class="bnav-btn" id="bn-flags" onclick="goFlags()"><span class="bi">⚑</span>Flagged</button>
+  <button class="bnav-btn" id="bn-report" onclick="goReport()"><span class="bi">📝</span>Report</button>
+</div>
+
+</div><!-- /app -->
+<script>
+/* ═══════════════════════════
+   ASSET DATA
+═══════════════════════════ */
+const ASSETS = [
+  // BUILDINGS
+  { id:'RSL-B001', type:'Building', name:'Bima House — Ministry of Finance HQ', entity:'National Treasury', county:'Nairobi', value:4200000000, year:1984, status:'ok', on_register:true, ppra:'N/A (pre-procurement era)', ppra_value:null, audit_flag:null, citizen_reports:0, note:'Principal seat of National Treasury. Valued at KSh 4.2B in accrual accounting transition (Feb 2025). Title: LR No. 209/3694.' },
+  { id:'RSL-B002', type:'Building', name:'Anniversary Towers — Ministry of Energy', entity:'Ministry of Energy', county:'Nairobi', value:1800000000, year:1978, status:'flag', on_register:true, ppra:'PPRA/2023/BLD/00441 — Renovation KSh 340M', ppra_value:340000000, audit_flag:'AG 2023/24: Renovation contract (KSh 340M) has no completion certificate. Building still listed as "works in progress" 18 months post-contract end date.', citizen_reports:3, note:'34-storey office tower. Renovation flagged by Auditor General 2023/24 report — contractor claims substantial completion, no independent verification.' },
+  { id:'RSL-B003', type:'Building', name:'Harambee House — OP & Cabinet Affairs', entity:'Office of the President', county:'Nairobi', value:6500000000, year:1963, status:'ok', on_register:true, ppra:'N/A', ppra_value:null, audit_flag:null, citizen_reports:0, note:'Official seat of the President. Title: Government Plot LR No. 209/1. Not commercially valuated — figure is heritage asset estimate.' },
+  { id:'RSL-B004', type:'Building', name:'Turkana County HQ — Lodwar', entity:'Turkana County Government', county:'Turkana', value:820000000, year:2016, status:'flag', on_register:false, ppra:'PPRA/2016/BLD/00882 — Construction KSh 1.1B', ppra_value:1100000000, audit_flag:'Construction cost: KSh 1.1B. PPRA record closed 2017. Building NOT on Turkana County asset register as of FY2025/26 AG report. Ghost asset.', citizen_reports:7, note:'County headquarters built 2016. Procurement record exists. Asset register entry missing. Classified as "ghost asset" — money spent, asset invisible.' },
+  { id:'RSL-B005', type:'Building', name:'Kisumu Provincial Hospital — Admin Block', entity:'Ministry of Health', county:'Kisumu', value:420000000, year:2019, status:'ok', on_register:true, ppra:'PPRA/2019/HLT/00229 — Construction KSh 460M', ppra_value:460000000, audit_flag:null, citizen_reports:1, note:'Health facility administrative block. Built 2019, commissioned 2020. On register at KSh 420M.' },
+
+  // LAND
+  { id:'RSL-L001', type:'Land', name:'Nairobi Arboretum — Government Reserve', entity:'Ministry of Environment', county:'Nairobi', value:18000000000, year:null, status:'flag', on_register:true, ppra:null, ppra_value:null, audit_flag:'Private encroachment on eastern boundary — 2.3 acres subject to disputed title. Case at ELC Nairobi: ELC/2024/0113. Gazette notice KG No. 4521 (2025) references parcel.', citizen_reports:12, note:'120-acre urban forest reserve. Eastern boundary has active land dispute — private developer holds title to overlapping parcel.' },
+  { id:'RSL-L002', type:'Land', name:'SGR Corridor Buffer — Syokimau to Athi', entity:'Kenya Railways Corporation', county:'Machakos', value:3200000000, year:2015, status:'flag', on_register:true, ppra:'PPRA/2015/INF/00033', ppra_value:null, audit_flag:'AG 2024: 17 parcels within the declared corridor have conflicting titles registered between 2016–2022. NLC compensation to original owners: KSh 890M — KSh 290M unpaid.', citizen_reports:4, note:'SGR land corridor. Multiple title conflicts identified. NLC compulsory acquisition incomplete.' },
+  { id:'RSL-L003', type:'Land', name:'Mombasa Port Expansion Reserve (Phase 3)', entity:'Kenya Ports Authority', county:'Mombasa', value:5600000000, year:null, status:'miss', on_register:false, ppra:'PPRA/2022/INF/00788 — Port expansion KSh 12B', ppra_value:12000000000, audit_flag:'MISSING FROM REGISTER: KPA Phase 3 expansion land acquisition (KSh 12B procurement, 2022) — land parcels not on public asset register. Gazette acquisition notices published LN No. 23 (2023) but no subsequent title transfer recorded.', citizen_reports:2, note:'Port expansion land. Gazette notice exists. Title transfer not recorded. Land purchased — but where is it on the register?' },
+  { id:'RSL-L004', type:'Land', name:'Konza Technopolis — Phase 1 Parcel', entity:'Konza Technopolis Authority', county:'Machakos', value:22000000000, year:2012, status:'ok', on_register:true, ppra:null, ppra_value:null, audit_flag:null, citizen_reports:0, note:'5,000-acre technology city development. Title registered to KTA. Valued at KSh 22B (2025 accrual valuation).' },
+
+  // VEHICLES
+  { id:'RSL-V001', type:'Vehicle', name:'Ministry of Education Vehicle Fleet — 847 units', entity:'Ministry of Education', county:'National', value:3388000000, year:2022, status:'flag', on_register:true, ppra:'PPRA/2022/VEH/00334 — KSh 4.2B fleet procurement', ppra_value:4200000000, audit_flag:'AG 2023/24: PPRA procurement for 1,200 vehicles (KSh 4.2B). Only 847 vehicles confirmed on NTSA register. 353 vehicles — worth approximately KSh 1.24B — unaccounted.', citizen_reports:8, note:'Fleet procured 2022. 353 vehicles missing from both NTSA records and Ministry asset register. AG raised query. No response from Accounting Officer.' },
+  { id:'RSL-V002', type:'Vehicle', name:'KeNHA Road Maintenance Fleet — 234 units', entity:'Kenya National Highways Authority', county:'National', value:936000000, year:2021, status:'ok', on_register:true, ppra:'PPRA/2021/VEH/00119', ppra_value:950000000, audit_flag:null, citizen_reports:1, note:'234 heavy road maintenance vehicles. All on NTSA and KeNHA asset register. FY2024/25 maintenance: KSh 43M.' },
+  { id:'RSL-V003', type:'Vehicle', name:'Nairobi County Health Dept Vehicles — 89 units', entity:'Nairobi City County', county:'Nairobi', value:267000000, year:2023, status:'flag', on_register:true, ppra:'PPRA/2023/VEH/00892 — KSh 318M', ppra_value:318000000, audit_flag:'AG Nairobi County 2024: 89 vehicles on procurement record. 31 vehicles (KSh 93M) have no valid insurance. 14 vehicles have NTSA records showing private addresses as primary location.', citizen_reports:5, note:'County health department vehicles. 14 vehicles showing private address on NTSA — possible private use of government asset.' },
+
+  // EQUIPMENT / INFRASTRUCTURE
+  { id:'RSL-E001', type:'Equipment', name:'National Youth Service Construction Equipment', entity:'National Youth Service', county:'National', value:2100000000, year:2019, status:'flag', on_register:false, ppra:'PPRA/2019/EQP/00445 — KSh 2.8B', ppra_value:2800000000, audit_flag:'MISSING FROM REGISTER: KSh 2.8B equipment procurement (2019). Equipment not on NYS asset register as of FY2024/25. AG 2024/25 report: "Officers could not produce equipment for physical verification." Location unknown.', citizen_reports:14, note:'The NYS equipment scandal. KSh 2.8B procured. Equipment not found. AG unable to verify. Citizens have reported seeing some equipment at private construction sites.' },
+  { id:'RSL-E002', type:'Equipment', name:'Garissa County Medical Equipment — 3 hospitals', entity:'Garissa County Government', county:'Garissa', value:180000000, year:2022, status:'flag', on_register:true, ppra:'PPRA/2022/HLT/00671 — KSh 215M', ppra_value:215000000, audit_flag:'Hali cross-reference: Garissa Referral Hospital dialysis unit (equipment in this procurement) reported non-functional by 34 citizens. CDF KSh 2.1M disbursed for repair (Feb 2025) — no operational status change recorded.', citizen_reports:34, note:'Medical equipment in Garissa hospitals. Cross-referenced with Hali citizen facility reports. Equipment procured but not operational.' },
+  { id:'RSL-E003', type:'Infrastructure', name:'Turkana Governor\'s Road (Lodwar–Kakuma 54km)', entity:'Turkana County Government', county:'Turkana', value:1200000000, year:2024, status:'flag', on_register:false, ppra:'PPRA/2024/RD/01102 — KSh 1.4B', ppra_value:1400000000, audit_flag:'Barabara cross-reference: 12 citizen road condition reports (severe) on this road — declared completed in Turkana County Annual Report June 2025. Road NOT on county asset register. County Annual Report claim inconsistent with citizen data.', citizen_reports:12, note:'Flagship road declared "completed" in county annual report. Not on register. Barabara has 12 active severe reports. The CAR cross-reference that Barabara surfaces — here as a live example.' },
+];
+
+const ENTITIES = [
+  { name:'National Treasury', type:'National Government', assets:['RSL-B001'], total:4200000000, flags:0 },
+  { name:'Ministry of Energy', type:'National Government', assets:['RSL-B002'], total:1800000000, flags:1 },
+  { name:'Office of the President', type:'National Government', assets:['RSL-B003'], total:6500000000, flags:0 },
+  { name:'Turkana County Government', type:'County Government', assets:['RSL-B004','RSL-E003'], total:2020000000, flags:2 },
+  { name:'Ministry of Health', type:'National Government', assets:['RSL-B005'], total:420000000, flags:0 },
+  { name:'Ministry of Environment', type:'National Government', assets:['RSL-L001'], total:18000000000, flags:1 },
+  { name:'Kenya Railways Corporation', type:'State Corporation', assets:['RSL-L002'], total:3200000000, flags:1 },
+  { name:'Kenya Ports Authority', type:'State Corporation', assets:['RSL-L003'], total:5600000000, flags:1 },
+  { name:'Konza Technopolis Authority', type:'State Corporation', assets:['RSL-L004'], total:22000000000, flags:0 },
+  { name:'Ministry of Education', type:'National Government', assets:['RSL-V001'], total:3388000000, flags:1 },
+  { name:'Kenya National Highways Authority', type:'State Corporation', assets:['RSL-V002'], total:936000000, flags:0 },
+  { name:'Nairobi City County', type:'County Government', assets:['RSL-V003'], total:267000000, flags:1 },
+  { name:'National Youth Service', type:'State Corporation', assets:['RSL-E001'], total:2100000000, flags:1 },
+  { name:'Garissa County Government', type:'County Government', assets:['RSL-E002'], total:180000000, flags:1 },
+];
+
+const CITIZEN_REPORTS_SEED = [
+  { id:'RAR-001', type:'Vehicle', entity:'Ministry of Interior', desc:'Government Land Cruiser with government plates parked permanently at a private residence in Karen. Plate KAB XXX.', ts:'2026-06-17T09:30:00', status:'Pending review' },
+  { id:'RAR-002', type:'Building', entity:'Kiambu County', desc:'Empty government dispensary building on Kiambu Road being used as a private warehouse. Built 2018 with CDF funds.', ts:'2026-06-16T14:20:00', status:'Verified — added to register' },
+  { id:'RAR-003', type:'Land', entity:'Ministry of Lands', desc:'Government land parcel LR 40021 in Ruiru — fence removed, private building under construction. Original Gazette notice shows government reserve.', ts:'2026-06-15T11:10:00', status:'Referred to AG VfM queue' },
+  { id:'RAR-004', type:'Equipment', entity:'Nakuru County', desc:'Tractor procured by county for smallholders (PPRA/2023/AGR/00441) has been at a private farm for 8 months. Serial number visible.', ts:'2026-06-14T16:45:00', status:'Pending review' },
+];
+
+let ALL_CITIZEN_REPORTS = [...CITIZEN_REPORTS_SEED];
+try { const s = JSON.parse(localStorage.getItem('rasilimali_reports') || '[]'); ALL_CITIZEN_REPORTS = [...s, ...CITIZEN_REPORTS_SEED]; } catch(e) {}
+
+const REVENUE_DATA = [
+  {
+    product:'Uwazi', icon:'⚖️',
+    streams:[
+      { name:'World Bank / GIZ TA contract', when:'yr1', desc:'Government technical assistance contract per country — Kenya first, then Uganda and Tanzania. Model: OpenCRVS and DHIS2. $2–5M/yr per country deployment. Year 1 target: COB letter of support → WB sponsorship → TA contract.' },
+      { name:'Donor grants (Hewlett, Ford, AFD)', when:'yr1', desc:'$50K–$750K grant for platform development. Hewlett Inclusive Governance programme is the primary target. ongom@hewlett.org is the contact.' },
+      { name:'OGP credentialling', when:'yr2', desc:'Getting Uwazi referenced in Kenya\'s OGP 5th NAP commitment on budget transparency changes how donors view the product — not a startup, a government commitment. Changes grant eligibility.' },
+    ],
+    note:'Do not charge COB a SaaS fee. The government cannot pay a startup on procurement without PPDA tendering. The World Bank sponsorship path solves this. Donor-funded is correct for fiscal oversight tools — charging the oversight body is a conflict of interest.'
+  },
+  {
+    product:'Nexus', icon:'🔵',
+    streams:[
+      { name:'Provider subscriptions (KSh 500–2K/month)', when:'yr1', desc:'Enhanced provider profile, analytics, WhatsApp integration, Zamani score display. 10,000 paying providers × KSh 1K/month = KSh 10M/month. This is the Year 1 target.' },
+      { name:'Zamani Score API for lenders', when:'yr2', desc:'KSh 50–200 per query from microfinance lenders, SACCOs, and mobile banks. At 5,000 queries/day = KSh 91M–365M/yr. This is the defensible long-term asset — the informal credit bureau nobody else has built.' },
+      { name:'Chama group subscription', when:'yr2', desc:'KSh 2K–5K/month for Chama treasurer portal — aggregate member Zamani scores, group lending eligibility, financial summary generator. 300,000 chamas in Kenya.' },
+    ],
+    note:'The discovery platform is the user acquisition engine. The Zamani data layer is the business. At 500K providers: the dataset is worth more than the platform.'
+  },
+  {
+    product:'Ardhi', icon:'🗺️',
+    streams:[
+      { name:'Diaspora Parcel Watch (KSh 2K–5K/year)', when:'yr1', desc:'Annual subscription per watched parcel. 3M+ diaspora Kenyans. Conservatively 500K with land. 10K subscribers = KSh 20–50M/yr. 100K subscribers = KSh 200–500M/yr. This is real recurring revenue from people who will pay for peace of mind.' },
+      { name:'Title search brokerage', when:'yr2', desc:'Facilitate official Ardhisasa/county office title searches on behalf of diaspora clients who cannot appear in person. Charge KSh 3K–8K per search (official fee + service margin). Volume: 50K searches/yr at 100K subscribers.' },
+      { name:'Legal referral commission', when:'yr2', desc:'When a Gazette notice touches a watched parcel, surface LSK land advocates. Earn 15–20% referral commission on mandates placed through Ardhi. Average land dispute mandate: KSh 50K–500K.' },
+    ],
+    note:'The civic accountability layer (Gazette scraper, NLC tracker) is the grant-funded infrastructure. The Diaspora Parcel Watch is the commercial product that funds it. This is the same model as a newsroom with a membership product.'
+  },
+  {
+    product:'Hali', icon:'🏥',
+    streams:[
+      { name:'County government subscription (KSh 50K–200K/yr)', when:'yr2', desc:'Engineer dashboard, SLA tracker, public KPI scorecard. 47 counties × KSh 100K = KSh 4.7M/yr at full penetration. Not large alone — but Hali as a data layer makes Uwazi and Rasilimali significantly more valuable. The cross-product join is the moat.' },
+      { name:'AG Value-for-Money audit data feed', when:'yr2', desc:'When Hali auto-generates an AG VfM flag, that's a service the AG's office would fund under their technical assistance budget. Model: data partnership, not SaaS subscription.' },
+      { name:'UNICEF / WHO facility monitoring contract', when:'yr2', desc:'Hali as the citizen-input layer for international monitoring programmes. UNICEF already funds facility monitoring in Kenya — Hali is the mobile/SMS replacement for biennial surveys.' },
+    ],
+    note:'Hali's commercial path is institutional, not consumer. The county subscription model works because counties have IT budgets and political incentive to show facility performance data publicly.'
+  },
+  {
+    product:'Lucid', icon:'⚡',
+    streams:[
+      { name:'Document generation fee (KSh 500–1K)', when:'yr1', desc:'Charged per claim package (Evidence Report + Demand Letter + Statutory Notice). M-Pesa integration needed. Year 1 target: 500 claims/month = KSh 250K–500K/month.' },
+      { name:'Insurer per-claim fee (KSh 1K)', when:'yr2', desc:'Charged to participating insurers per Lucid-documented claim processed. Insurer saves on back-and-forth; Lucid earns KSh 1K/claim. At 20% claim rate with APA as first partner: significant passive revenue.' },
+      { name:'SACCO group PSV policy brokerage (10–15% commission)', when:'yr2', desc:'Lucid Watch safety records → better group PSV rate → Lucid brokers the policy → earns commission. This is the flywheel: safety data creates the underwriting signal, brokerage creates the revenue.' },
+      { name:'Fleet manager dashboard (KSh 2K/month)', when:'yr2', desc:'Matatu and PSV operators see aggregate Watch data for their plates. Reputational and operational value. Subscription.' },
+    ],
+    note:'Year 5 model: KSh 309.8M (with insurer per-claim fee at 20% claim rate). KSh 129.8M excluding per-claim fee. The document fee is day-one revenue the moment M-Pesa is wired up.'
+  },
+  {
+    product:'Barabara', icon:'🛣️',
+    streams:[
+      { name:'County engineer subscription (KSh 50K–200K/yr)', when:'yr2', desc:'Triage queue, CAR cross-check, contractor accountability view. 47 counties × KSh 100K at penetration = KSh 4.7M/yr. Political incentive is strong: counties want to show roads are being maintained.' },
+      { name:'Logistics company data access (KSh 200K–500K/yr)', when:'yr2', desc:'DHL, Sendy, Lori Systems, Twiga all need real-time road condition data for route planning. A Nairobi logistics company hitting bad roads daily would pay KSh 200K/yr for a clean API. 10 companies = KSh 2M–5M/yr.' },
+      { name:'MP constituency report (KSh 50K/constituency)', when:'yr3', desc:'Before elections, every MP wants a shareable road score report for their constituency. One-off report: KSh 50K. 290 constituencies × 50% uptake = KSh 7.25M every election cycle.' },
+      { name:'KeNHA/KURA data partnership contract', when:'yr3', desc:'Once Barabara has depth (10K+ reports), KeNHA and KURA would pay for the structured data API rather than build it themselves. Government data partnership contract: KSh 2M–10M/yr.' },
+    ],
+    note:'Barabara\'s fastest revenue path: approach 3 Nairobi logistics companies directly. They have the pain (bad roads cost them fuel and vehicle damage) and the budget. County subscriptions are slower but more strategic.'
+  },
+  {
+    product:'Mzigo', icon:'🌍',
+    streams:[
+      { name:'Civil society data licensing', when:'yr2', desc:'The extortion report database — anonymised, aggregated by crossing — has research and advocacy value for TradeMark Africa, GIZ, EAC Secretariat, Kenya NTA. KSh 500K–2M/yr per partner for structured crossing intelligence.' },
+      { name:'AU Civic Tech Fund grant (€15K)', when:'yr1', desc:'The pan-African EAC scope strengthens the Cohort 3 application. Raise this on the Ushahidi call with Declan on Monday. Do not pitch it directly — describe Mzigo as a concept you are considering for a future application.' },
+      { name:'Trader verification premium', when:'yr2', desc:'A verified Mzigo trader profile (dispute history, commodity categories, crossing frequency) has Nexus Zamani integration value — cross-border traders can share it as a trust credential. KSh 500–1K/yr subscription.' },
+    ],
+    note:'Mzigo\'s public value layer (dispute receipt) must stay free — that is the product\'s ethical core and the reason governments and civil society would support it. Revenue comes from the data layer, not the dispute tool itself.'
+  },
+  {
+    product:'Rasilimali', icon:'🏛️',
+    streams:[
+      { name:'Institutional data access (KSh 100K–500K/yr)', when:'yr2', desc:'Parliamentary committees, investigative media, county audit committees — structured data export, API access, premium dashboard. The public search stays free. Institutional query layer: paid.' },
+      { name:'World Bank / Treasury TA alignment', when:'yr1', desc:'The government\'s own accrual accounting project (KSh 3.1B, 2024–2027) needs a citizen-facing layer. Rasilimali is that layer. Position it as a technical assistance component, not a competing platform. This is the entry point.' },
+      { name:'AG VfM referral pipeline', when:'yr2', desc:'When citizen reports result in verified AG VfM audit flags, the AG\'s office would fund Rasilimali as a citizen input mechanism under their technical assistance budget. Hali already demonstrated this model.' },
+      { name:'Journalist research pack (KSh 10K–50K per investigation)', when:'yr2', desc:'Pre-packaged asset dossiers for investigative journalists: all publicly verifiable records on an entity, procurement cross-references, citizen reports, AG findings, in one shareable document. Charged per investigation.' },
+    ],
+    note:'Rasilimali is civic infrastructure — the grant and TA path is correct for Phase 1. Revenue in Phase 2 comes from institutional users who need structured data, not citizens who need a search tool. The citizen layer stays permanently free.'
+  },
+];
+
+/* ═══════════════════════════
+   LEDGER ANIMATION
+═══════════════════════════ */
+const LEDGER_ITEMS = [
+  { name:'Bima House · National Treasury · Nairobi', value:'KSh 4.2B', status:'ok' },
+  { name:'SGR Corridor Buffer · Kenya Railways · Machakos', value:'KSh 3.2B', status:'flag' },
+  { name:'MoE Vehicle Fleet · 847 units confirmed', value:'KSh 3.4B', status:'flag' },
+  { name:'Anniversary Towers · Min. Energy · Nairobi', value:'KSh 1.8B', status:'flag' },
+  { name:'NYS Construction Equipment · Location unknown', value:'KSh 2.8B', status:'miss' },
+  { name:'Turkana County HQ · Not on register', value:'KSh 1.1B', status:'miss' },
+  { name:'Konza Technopolis · KTA · Machakos', value:'KSh 22B', status:'ok' },
+  { name:'Mombasa Port Phase 3 Land · Title unrecorded', value:'KSh 5.6B', status:'miss' },
+];
+
+let ledgerIdx = 0;
+function addLedgerRow() {
+  if (ledgerIdx >= LEDGER_ITEMS.length) { ledgerIdx = 0; document.getElementById('ledger-body').innerHTML = ''; }
+  const item = LEDGER_ITEMS[ledgerIdx++];
+  const row = document.createElement('div');
+  row.className = 'ledger-row';
+  const tagClass = item.status==='ok'?'s-ok':item.status==='flag'?'s-flag':'s-miss';
+  const tagText = item.status==='ok'?'On register':item.status==='flag'?'⚑ Flagged':'Missing';
+  row.innerHTML = `<div class="ledger-cell name">${item.name}</div><div class="ledger-cell value">${item.value}</div><div class="ledger-cell status"><span class="status-tag ${tagClass}">${tagText}</span></div>`;
+  document.getElementById('ledger-body').appendChild(row);
+}
+setInterval(addLedgerRow, 1800);
+for (let i=0;i<4;i++) { setTimeout(addLedgerRow, i*300); }
+
+/* ═══════════════════════════
+   NAVIGATION
+═══════════════════════════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('on'));
+  const map={'scr-home':'bn-home','scr-search':'bn-search','scr-flags':'bn-flags','scr-report':'bn-report','scr-entities':'bn-search','scr-revenue':'bn-home'};
+  if(map[id]) document.getElementById(map[id]).classList.add('on');
+  window.scrollTo(0,0);
+}
+function goHome(){showScreen('scr-home'); renderHomeReports();}
+function goSearch(){renderAssetList(); renderCatFilters(); showScreen('scr-search');}
+function goEntities(){renderEntities(); showScreen('scr-entities');}
+function goFlags(){renderFlags(); renderFlagFilters(); showScreen('scr-flags');}
+function goReport(){showScreen('scr-report');}
+function goRevenue(){renderRevenue(); showScreen('scr-revenue');}
+
+/* ═══════════════════════════
+   ASSET LIST
+═══════════════════════════ */
+let activeType = 'all';
+function renderCatFilters() {
+  const types = ['all', ...new Set(ASSETS.map(a=>a.type))];
+  document.getElementById('cat-filters').innerHTML = types.map(t=>
+    `<button class="filter-pill${t===activeType?' on':''}" onclick="setType('${t}')">${t==='all'?'All types':t}</button>`
+  ).join('');
+}
+function setType(t){activeType=t;renderCatFilters();filterAssets();}
+function filterAssets() {
+  const q=(document.getElementById('asset-search').value||'').toLowerCase();
+  const filtered=ASSETS.filter(a=>(activeType==='all'||a.type===activeType)&&(a.name.toLowerCase().includes(q)||a.entity.toLowerCase().includes(q)||a.county.toLowerCase().includes(q)));
+  document.getElementById('result-count').textContent=`${filtered.length} asset${filtered.length!==1?'s':''} found`;
+  document.getElementById('asset-list').innerHTML=filtered.map(assetCard).join('');
+}
+function renderAssetList(){filterAssets();}
+
+function ppraBlock(a) {
+  if (!a.ppra) return '';
+  var valSpan = a.ppra_value ? '<span style="color:var(--slate2);margin-left:8px">KSh ' + fmtVal(a.ppra_value) + '</span>' : '';
+  return '<div style="margin-top:8px;padding:8px 10px;background:var(--ink3);border-radius:6px;font-size:11px"><span style="color:var(--gold);font-family:var(--font-mono)">' + a.ppra + '</span>' + valSpan + '</div>';
+}
+
+function assetCard(a) {
+  var cls = a.status==='flag'?'flagged':a.status==='miss'?'missing':'';
+  var badgeCls = a.status==='ok'?'s-ok':a.status==='flag'?'s-flag':'s-miss';
+  var badgeTxt = a.status==='ok'?'On register':a.status==='flag'?'⚑ Flagged':'⚠ Missing';
+  var flagBlock = '';
+  if (a.audit_flag) {
+    var flagCls = a.status==='miss' ? 'ac-miss' : 'ac-flag';
+    var flagIcon = a.status==='miss' ? '⚠' : '⚑';
+    flagBlock = '<div class="' + flagCls + '"><span>' + flagIcon + '</span><span>' + a.audit_flag + '</span></div>';
+  } else if (a.citizen_reports > 0) {
+    flagBlock = '<div class="ac-ok"><span>✓</span><span>' + a.citizen_reports + ' citizen report' + (a.citizen_reports!==1?'s':'') + ' filed on this asset.</span></div>';
+  }
+  var regColor = a.on_register ? '#4ADE80' : '#F87171';
+  return `<div class="asset-card ${cls}">
+    <div class="ac-header">
+      <div><div class="ac-name">${a.name}</div><div class="ac-id">${a.id} · ${a.type}</div></div>
+      <span class="ac-badge status-tag ${badgeCls}">${badgeTxt}</span>
+    </div>
+    <div class="ac-grid">
+      <div class="ac-field"><div class="ac-key">Entity</div><div class="ac-val" style="font-family:var(--font-sans);font-size:11px">${a.entity}</div></div>
+      <div class="ac-field"><div class="ac-key">County</div><div class="ac-val" style="font-family:var(--font-sans);font-size:11px">${a.county}</div></div>
+      <div class="ac-field"><div class="ac-key">Est. value</div><div class="ac-val">KSh ${fmtVal(a.value)}</div></div>
+      <div class="ac-field"><div class="ac-key">On register</div><div class="ac-val" style="color:${regColor}">${a.on_register?'Yes':'No'}</div></div>
+    </div>
+    ${ppraBlock(a)}
+    ${flagBlock}
+  </div>`;
+}
+
+/* ═══════════════════════════
+   ENTITY LIST
+═══════════════════════════ */
+function renderEntities() {
+  const sorted=[...ENTITIES].sort((a,b)=>b.total-a.total);
+  document.getElementById('entity-list').innerHTML = sorted.map(e=>
+    `<div class="entity-header" style="cursor:pointer;margin-bottom:10px" onclick="goSearch()">
+      <div class="ent-name">${e.name}</div>
+      <div class="ent-type">${e.type}</div>
+      <div class="ent-stat-row">
+        <div class="ent-stat"><div class="ent-stat-val">${e.assets.length}</div><div class="ent-stat-lbl">Assets indexed</div></div>
+        <div class="ent-stat"><div class="ent-stat-val">KSh ${fmtVal(e.total)}</div><div class="ent-stat-lbl">Total value</div></div>
+        <div class="ent-stat"><div class="ent-stat-val" style="color:${e.flags>0?'var(--red)':'#4ADE80'}">${e.flags}</div><div class="ent-stat-lbl">Audit flags</div></div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+/* ═══════════════════════════
+   FLAGGED ASSETS
+═══════════════════════════ */
+let activeFlagType = 'all';
+function renderFlagFilters() {
+  const types = ['all','Missing from register','Procurement mismatch','Audit query','Citizen reports','Cross-product flag'];
+  document.getElementById('flag-filters').innerHTML = types.map(t=>
+    `<button class="filter-pill${t===activeFlagType?' on':''}" onclick="setFlagType('${t}')">${t}</button>`
+  ).join('');
+}
+function setFlagType(t){activeFlagType=t;renderFlagFilters();renderFlags();}
+function renderFlags() {
+  const flagged = ASSETS.filter(a=>a.status!=='ok');
+  document.getElementById('flag-list').innerHTML = flagged.map(assetCard).join('');
+}
+
+/* ═══════════════════════════
+   HOME REPORTS
+═══════════════════════════ */
+function renderHomeReports() {
+  const el = document.getElementById('home-reports');
+  if (!el) return;
+  el.innerHTML = ALL_CITIZEN_REPORTS.slice(0,4).map(r=>
+    `<div style="background:var(--ink2);border:1px solid var(--bd2);border-radius:8px;padding:12px 14px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+        <span style="font-family:var(--font-mono);font-size:10px;color:var(--gold)">${r.id}</span>
+        <span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px;background:${r.status.includes('Verified')?'var(--green-l)':r.status.includes('Referred')?'rgba(99,102,241,.15)':'var(--gold-l)'};color:${r.status.includes('Verified')?'#4ADE80':r.status.includes('Referred')?'#A5B4FC':'var(--gold)'}">${r.status}</span>
+      </div>
+      <div style="font-size:12px;color:var(--w90);line-height:1.5;margin-bottom:4px">${r.desc}</div>
+      <div style="font-size:11px;color:var(--slate)">${r.type} · ${r.entity} · ${timeAgo(new Date(r.ts))}</div>
+    </div>`
+  ).join('');
+}
+
+/* ═══════════════════════════
+   CITIZEN REPORT SUBMIT
+═══════════════════════════ */
+function submitReport() {
+  const type=document.getElementById('rep-type').value;
+  const entity=document.getElementById('rep-entity').value.trim();
+  const location=document.getElementById('rep-location').value.trim();
+  const issue=document.getElementById('rep-issue').value.trim();
+  if(!type||!issue){alert('Please fill in the asset type and describe the issue.');return;}
+  const report={id:'RAR-'+Date.now().toString(36).toUpperCase().slice(-4),type,entity:entity||'Unknown',location,desc:issue,ppra:document.getElementById('rep-ppra').value.trim(),ts:new Date().toISOString(),status:'Pending review'};
+  try{const ex=JSON.parse(localStorage.getItem('rasilimali_reports')||'[]');ex.unshift(report);localStorage.setItem('rasilimali_reports',JSON.stringify(ex));ALL_CITIZEN_REPORTS.unshift(report);}catch(e){}
+  const conf=document.getElementById('rep-confirm');
+  conf.innerHTML=`<div class="info-box" style="border-color:var(--green-l);color:#4ADE80"><strong>Report submitted — ${report.id}</strong><br>Added to the Rasilimali citizen queue. Reports matching AG audit flags are fast-tracked for verification. Thank you.</div>`;
+  conf.style.display='block';
+  ['rep-type','rep-entity','rep-location','rep-issue','rep-ppra','rep-value'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+}
+
+/* ═══════════════════════════
+   REVENUE MODEL
+═══════════════════════════ */
+function renderStreams(streams) {
+  return streams.map(function(s) {
+    var whenLabel = s.when === 'yr1' ? 'Year 1' : s.when === 'yr2' ? 'Year 2' : 'Year 3+';
+    var whenClass = s.when === 'yr1' ? 'rt-yr1' : s.when === 'yr2' ? 'rt-yr2' : 'rt-yr3';
+    return '<div style="margin:10px 0 6px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px">'
+      + '<div style="font-size:12px;font-weight:600;color:var(--w90);flex:1">' + s.name + '</div>'
+      + '<span class="rev-tag ' + whenClass + '">' + whenLabel + '</span>'
+      + '</div>'
+      + '<div style="font-size:12px;color:var(--slate2);line-height:1.6;margin-bottom:8px;border-bottom:1px solid var(--bd2);padding-bottom:8px">' + s.desc + '</div>';
+  }).join('');
+}
+
+function renderRevenue() {
+  const el = document.getElementById('revenue-content');
+  el.innerHTML = REVENUE_DATA.map(p=>`
+    <div class="rev-card">
+      <div class="rev-title"><span>${p.icon} ${p.product}</span></div>
+      ${renderStreams(p.streams)}
+      <div style="font-size:11px;color:var(--slate);line-height:1.6;margin-top:6px;font-style:italic;border-top:1px solid var(--bd2);padding-top:8px">${p.note}</div>
+    </div>
+  `).join('');
+}
+
+/* ═══════════════════════════
+   UTILS
+═══════════════════════════ */
+function fmtVal(n) {
+  if(n>=1e12) return (n/1e12).toFixed(1)+'T';
+  if(n>=1e9) return (n/1e9).toFixed(1)+'B';
+  if(n>=1e6) return (n/1e6).toFixed(0)+'M';
+  return n.toLocaleString();
+}
+function timeAgo(d){const s=Math.floor((Date.now()-d)/1000);if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+
+/* ═══════════════════════════
+   INIT
+═══════════════════════════ */
+renderHomeReports();
+goHome();
+</script>
+</body>
+</html>
